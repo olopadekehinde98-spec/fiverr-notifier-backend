@@ -25,7 +25,8 @@ router.get('/connect', (req, res) => {
 
 // Step 2: Google redirects back here with auth code
 router.get('/callback', async (req, res) => {
-  const { code } = req.query;
+  const { code, error } = req.query;
+  if (error) return res.status(400).send(`OAuth error: ${error}`);
   if (!code) return res.status(400).send('Missing authorization code');
 
   try {
@@ -38,13 +39,19 @@ router.get('/callback', async (req, res) => {
     const email = profile.data.emailAddress;
 
     await storeTokens(email, tokens);
-    await setupGmailWatch(email, oauth2Client);
+
+    // Watch setup is non-fatal — tokens are stored even if this fails
+    try {
+      await setupGmailWatch(email, oauth2Client);
+    } catch (watchErr) {
+      console.error('Gmail watch setup failed (non-fatal):', watchErr.message);
+    }
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     res.redirect(`${frontendUrl}?connected=true&email=${encodeURIComponent(email)}`);
   } catch (err) {
     console.error('Auth callback error:', err.message);
-    res.status(500).send('Authentication failed. Please try again.');
+    res.status(500).send(`Authentication failed: ${err.message}`);
   }
 });
 
