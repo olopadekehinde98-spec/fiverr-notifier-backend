@@ -32,6 +32,19 @@ app.post('/pubsub/push', handlePubSubPush);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// Test endpoint — fires a fake Fiverr notification to all connected clients
+app.get('/test', (req, res) => {
+  const { broadcast } = require('./websocket');
+  broadcast({
+    type: 'fiverr_email',
+    summary: 'New order from buyer john99 — Logo Design · $75',
+    subject: 'New Order Received',
+    account: 'test@fiverr.com',
+    timestamp: new Date().toISOString(),
+  });
+  res.json({ ok: true, message: 'Test notification sent!' });
+});
+
 const server = http.createServer(app);
 initWebSocket(server);
 
