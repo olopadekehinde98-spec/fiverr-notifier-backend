@@ -14,7 +14,7 @@ router.post('/', async (req, res) => {
     res.json({ answer });
   } catch (err) {
     console.error('Chat error:', err.message);
-    res.status(500).json({ error: 'AI unavailable, try again.' });
+    res.status(500).json({ error: err.message });
   }
 });
 
