@@ -12,15 +12,8 @@ const { startPolling } = require('./services/polling');
 const app = express();
 
 app.use(helmet());
-const ALLOWED_ORIGINS = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://192.168.1.113:5173',
-].filter(Boolean);
-
 app.use(cors({
-  origin: (origin, cb) => cb(null, !origin || ALLOWED_ORIGINS.includes(origin)),
+  origin: true,
   credentials: true,
 }));
 app.use(express.json({ limit: '1mb' }));
