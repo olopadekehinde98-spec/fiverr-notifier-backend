@@ -47,7 +47,7 @@ router.get('/callback', async (req, res) => {
       console.error('Gmail watch setup failed (non-fatal):', watchErr.message);
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://elaborate-mooncake-c2b4fb.netlify.app';
     res.redirect(`${frontendUrl}?connected=true&email=${encodeURIComponent(email)}`);
   } catch (err) {
     console.error('Auth callback error:', err.message);

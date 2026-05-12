@@ -33,4 +33,23 @@ Only the summary sentence, nothing else.`,
   return response.content[0].text.trim();
 }
 
-module.exports = { generateSummary };
+async function answerQuestion(question, emailContext = '') {
+  const context = emailContext
+    ? `\n\nRecent Fiverr email:\n${emailContext}`
+    : '';
+
+  const response = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 200,
+    messages: [
+      {
+        role: 'user',
+        content: `You are a helpful assistant for a Fiverr seller. Answer concisely.${context}\n\nQuestion: ${question}`,
+      },
+    ],
+  });
+
+  return response.content[0].text.trim();
+}
+
+module.exports = { generateSummary, answerQuestion };

@@ -6,13 +6,21 @@ const rateLimit = require('express-rate-limit');
 const http = require('http');
 const { initWebSocket } = require('./websocket');
 const authRoutes = require('./routes/auth');
-const { handlePubSubPush } = require('./services/pubsub');
+const chatRoutes = require('./routes/chat');
+const { startPolling } = require('./services/polling');
 
 const app = express();
 
 app.use(helmet());
+const ALLOWED_ORIGINS = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://192.168.1.113:5173',
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, cb) => cb(null, !origin || ALLOWED_ORIGINS.includes(origin)),
   credentials: true,
 }));
 app.use(express.json({ limit: '1mb' }));
@@ -26,9 +34,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 app.use('/auth', authRoutes);
-
-// Gmail Pub/Sub push — no rate limit, Google calls this
-app.post('/pubsub/push', handlePubSubPush);
+app.use('/chat', chatRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
@@ -39,7 +45,8 @@ app.get('/test', (req, res) => {
     type: 'fiverr_email',
     summary: 'New order from buyer john99 — Logo Design · $75',
     subject: 'New Order Received',
-    account: 'test@fiverr.com',
+    from: 'noreply@fiverr.com',
+    account: 'test@example.com',
     timestamp: new Date().toISOString(),
   });
   res.json({ ok: true, message: 'Test notification sent!' });
@@ -51,4 +58,5 @@ initWebSocket(server);
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Fiverr Notifier backend running on port ${PORT}`);
+  startPolling();
 });
